@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tablet Reminder - 3 Times a Day</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  @font-face { font-family: 'Coolvetica'; src: url('coolvetia/Coolvetica Rg.otf') format('opentype'); }
+  * { padding:0; margin:0; box-sizing: border-box; font-family: 'Coolvetica', sans-serif; }
+  body { background: #f7f7f8; padding: 20px; }
+  .container { max-width: 800px; margin: auto; background: white; border-radius: 12px; padding: 20px; border: 2px solid #154d21; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .icon-circle { width: 40px; height: 40px; background: #f8cf2a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #154d21; }
+  .header button { background: #f8cf2a; color: #154d21; border: none; border-radius: 6px; padding: 8px 14px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+  .header button:hover { background: #154d21; color: white; }
+  .med-list { margin-top: 20px; }
+  .med-item { display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; }
+  .med-details { display: flex; gap: 10px; align-items: center; }
+  .med-details i { color: #154d21; }
+  .badge { border: 1px solid #154d21; padding: 3px 8px; border-radius: 4px; font-size: 12px; display: flex; align-items: center; gap: 4px; color: #154d21; background: #fffef3; }
+  .voice-info { margin-top:20px; background: #154d21; padding: 10px; border-radius: 6px; font-size: 14px; color: white; }
+  .modal { display: none; position: fixed; z-index: 1000; inset: 0; background: rgba(0,0,0,0.5); }
+  .modal-content { background: #ffffff; padding: 20px; max-width: 420px; margin: 80px auto; border-radius: 10px; border: 2px solid #154d21; }
+  .modal-content h3 { background: #154d21; color: white; padding: 10px; border-radius: 8px 8px 0 0; margin: -20px -20px 15px -20px; font-size: 1.2rem; }
+  .modal-content label { font-weight: bold; display: block; margin: 10px 0 5px; color: #154d21; }
+  .modal-content input { width: 100%; padding: 8px; border: 1px solid #154d21; border-radius: 6px; outline: none; background: #ffffff; margin-bottom:5px; }
+  .help { font-size: 12px; color: #4c7a59; margin-top: 4px; }
+  .modal-content input:focus { border-color: #f8cf2a; box-shadow: 0 0 4px #f8cf2a; }
+  .modal-content button.save-medication, .modal-content button.cancel { font-weight: bold; border-radius: 6px; padding: 10px 14px; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+  .modal-content button.save-medication { background: #f8cf2a; color: #154d21; border: none; }
+  .modal-content button.save-medication:hover { background: #154d21; color: white; }
+  .modal-content button.cancel { background: #ffffff; color: #154d21; border: 2px solid #154d21; }
+  .modal-content button.cancel:hover { background: #154d21; color: white; }
+  .remove-btn { background: transparent; border: 2px solid #154d21; color: #154d21; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+  .remove-btn:hover { background: #154d21; color: white; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <div class="icon-circle"><i class="fas fa-pills"></i></div>
+      <div>
+        <h3>Medication Reminders</h3>
+        <p style="font-size: 14px; color: gray;">Take your medicine 3 times a day</p>
+      </div>
+    </div>
+    <button onclick="openModal()"><i class="fas fa-plus"></i> Add Medication</button>
+  </div>
+
+  <div id="medications" class="med-list">
+    <div style="text-align:center; padding: 20px; color: gray;">
+      <i class="fas fa-pills fa-2x"></i>
+      <p>No medications added yet</p>
+      <small>Add your medications to receive reminders</small>
+    </div>
+  </div>
+
+  <div class="voice-info">
+    <i class="fas fa-envelope" style="color: white;"></i>
+    <strong style="color: white;">Email Notifications:</strong> "You will receive an email reminder for your medication"
+  </div>
+</div>
+
+<div id="medModal" class="modal">
+  <div class="modal-content">
+    <h3>Add New Medication</h3>
+
+    <label for="userEmail">Your Email</label>
+    <input type="email" id="userEmail" placeholder="e.g., example@gmail.com">
+
+    <label for="medName">Medication Name</label>
+    <input type="text" id="medName" placeholder="e.g., Aspirin">
+
+    <label for="medMorning">Morning Time</label>
+    <input type="time" id="medMorning">
+    <div class="help">Suggested: 07:00–09:00</div>
+
+    <label for="medAfternoon">Afternoon Time</label>
+    <input type="time" id="medAfternoon">
+    <div class="help">Suggested: 12:00–15:00</div>
+
+    <label for="medEvening">Evening Time</label>
+    <input type="time" id="medEvening">
+    <div class="help">Suggested: 18:00–21:00</div>
+
+    <label for="medDuration">Duration (Days)</label>
+    <input type="number" id="medDuration" min="1" placeholder="e.g., 7">
+
+    <button class="save-medication" onclick="addMedication()">Add Medication</button>
+    <button class="cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+let medications = [];
+
+function openModal() { document.getElementById('medModal').style.display = 'block'; }
+function closeModal() { document.getElementById('medModal').style.display = 'none'; }
+
+function addMedication() {
+  const email = document.getElementById('userEmail').value.trim();
+  const name = document.getElementById('medName').value.trim();
+  const morning = document.getElementById('medMorning').value;
+  const afternoon = document.getElementById('medAfternoon').value;
+  const evening = document.getElementById('medEvening').value;
+  const duration = parseInt(document.getElementById('medDuration').value);
+
+  if (!email || !name || duration <= 0) return alert("Please fill Email, Medication Name and valid duration");
+
+  const times = [morning, afternoon, evening].filter(Boolean);
+  const med = { id: Date.now(), name, times, duration, email };
+  medications.push(med);
+  renderMedications();
+  closeModal();
+
+  ['userEmail','medName','medMorning','medAfternoon','medEvening','medDuration'].forEach(id => document.getElementById(id).value = "");
+
+  // Schedule email for each time
+  times.forEach(time => {
+    fetch("http://localhost:3000/schedule-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: `Medication Reminder: ${name}`,
+        message: `⏰ Reminder: Time to take your ${name}! 💊`,
+        time,
+        email
+      })
+    })
+    .then(res => res.json())
+    .then(data => console.log("Email scheduled:", data))
+    .catch(err => console.error("Error scheduling email:", err));
+  });
+}
+
+function removeMedication(id) {
+  medications = medications.filter(m => m.id !== id);
+  renderMedications();
+}
+
+function renderMedications() {
+  const container = document.getElementById('medications');
+  container.innerHTML = "";
+  if(!medications.length){
+    container.innerHTML = `<div style="text-align:center; padding:20px; color:gray;">
+      <i class="fas fa-pills fa-2x"></i>
+      <p>No medications added yet</p>
+      <small>Add your medications to receive reminders</small>
+    </div>`;
+    return;
+  }
+  medications.forEach(med => {
+    const timesDisplay = med.times.length ? med.times.join(" • ") : "No times set";
+    const div = document.createElement('div');
+    div.className = "med-item";
+    div.innerHTML = `
+      <div class="med-details">
+        <i class="fas fa-pills"></i>
+        <div>
+          <strong>${med.name}</strong><br>
+          <small><i class="far fa-clock"></i> ${timesDisplay}</small><br>
+          <small>Duration: ${med.duration} day${med.duration>1?'s':''}</small><br>
+          <small>Email: ${med.email}</small>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="remove-btn" onclick="removeMedication(${med.id})">Remove</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
